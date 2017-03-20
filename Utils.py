@@ -1,25 +1,42 @@
+"""
+--------------------------------------------------------------------------------
+FILE: Utils.py
+DESC: Utility functions for the simulation
+AUTH: thorsilver
+VERS: 1.0 March 2017
+REQS: Python 3.x (version 3.6 used)
+--------------------------------------------------------------------------------
+"""
+from __future__ import print_function # ensure Python 3.x print form known
 import sys
 import os
-import pylab
 import math
+import pylab
 
 def create_dir(dir_name):
 
+    """
+    *** Needs description ***
+    """
     # create results directory if it doesn't already exist
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
 
-def transpose(m):
+def transpose(matr):
 
-	"""
-	Transpose the rectangular two-dimentional matrix m.
-	"""
-	return [[m[y][x] for y in range(len(m))]for x in range(len(m[0]))]
+    """
+    Transpose the rectangular two-dimentional matrix matr.
+    """
+    return [[matr[y][x]
+             for y in range(len(matr))] for x in range(len(matr[0]))]
 
 
 def get_mean(data):
 
+    """
+    *** Needs description ***
+    """
     if len(data) > 0:
         return sum(data)/len(data)
     else:
@@ -31,44 +48,46 @@ def get_mean_and_sum(data):
     """
     Takes a 2D array of data and calculates mean and sum of each sub-list.
     """
-
     return [get_mean(x) for x in data], [sum(x) for x in data]
 
 
-def create_colour_dict(n=0):
+def create_colour_dict(keymax=0):
 
-    "Create a colour dictionary with an entry for each state."
-    
+    """
+    Create a colour dictionary with an entry for each state.
+    """
     colour_dict = {}
-    colour_dict['none']='white'    # nodes in no group
+    colour_dict['none'] = 'white' # nodes in no group
     index = 0
-    keys = xrange(0, n)
-    prev_colour=0
+    keys = range(0, keymax)     # *** was xrange ***
+    prev_colour = 0
     for g_id in [x for x in keys]:
-        cur_colour = (prev_colour+383)%n
+        cur_colour = (prev_colour+383) % keymax
         colour_dict[g_id] = '#%02x%02x%02x' \
-                % hsl2rgb(float(cur_colour)/(len(keys)),1.0,0.5)
+                % hsl2rgb(float(cur_colour)/(len(keys)), 1.0, 0.5)
         prev_colour = cur_colour
         index += 1
     return colour_dict
 
 
-def get_red_green_colour(x):
+def get_red_green_colour(tomatch):
 
     """
-    Get a colour in the red-green colour range corresponding to x.
+    Get a colour in the red-green colour range corresponding to tomatch.
 
-    x in range [0.0, 1.0]
+    tomatch in range [0.0, 1.0]
     0.0 -> red
     0.5 -> yellow
     1.0 -> green
     """
-
-    return '#%02x%02x%02x' % hsl2rgb(x/4.0,1.0,0.5)
+    return '#%02x%02x%02x' % hsl2rgb(tomatch/4.0, 1.0, 0.5)
 
 
 def create_plot_colour_dict():
 
+    """
+    *** Needs description ***
+    """
     colour_dict = {}
     colour_dict['none'] = 'white'
     colour_dict[0] = 'teal'
@@ -81,121 +100,131 @@ def create_plot_colour_dict():
     return colour_dict
 
 
-def hsl2rgb(h,s,l):
-    if (s == 0.0 ):                       # HSL values = [0-1]
-        r = 255*l                       # RGB results = [0-1]
-        g = 255*l
-        b = 255*l
+def hsl2rgb(hue, sat, light):
+
+    """
+    *** Needs description ***
+    """
+    if sat == 0.0:                # HSL values = [0-1]
+        red = 255*light               # RGB results = [0-1]
+        grn = 255*light
+        blu = 255*light
     else:
-        if (l < 0.5):
-            q = l * (1 + s)
+        if light < 0.5:
+            upper = light * (1 + sat)
         else:
-            q = (l + s) - (l * s)
-        p = 2 * l - q
+            upper = (light + sat) - (light * sat)
+        lower = 2 * light - upper
 
-        r = rounded(255*Hue_2_RGB(p, q, h + (1.0/3.0)))
-        g = rounded(255*Hue_2_RGB(p, q, h))
-        b = rounded(255*Hue_2_RGB(p, q, h - (1.0/3.0)))
-    return (r,g,b)  
+        red = rounded(255*hue_2_rgb(lower, upper, hue + (1.0/3.0)))
+        grn = rounded(255*hue_2_rgb(lower, upper, hue))
+        blu = rounded(255*hue_2_rgb(lower, upper, hue - (1.0/3.0)))
+    return (red, grn, blu)
 
-def Hue_2_RGB(p,q,t):             # Hue_2_RGB
-    if (t<0):
-        t += 1.0
-    if (t>1):
-        t -= 1.0
-    if ((6 * t) < 1):
-        return (p + ((q - p) * 6 * t))
-    if ((2 * t) < 1):
-        return q 
-    if ((3 * t) < 2):
-        return (p + ((q - p) * 6 * ((2.0/3.0) - t)))
-    return p 
-  
-def rounded(float):
-  return int(math.floor(float+0.5))
- 
+
+def hue_2_rgb(lower, upper, thresh):         # hue_2_rgb
+
+    """
+    *** Needs description ***
+    """
+    if thresh < 0:
+        thresh += 1.0
+    if thresh > 1:
+        thresh -= 1.0
+    if (6 * thresh) < 1:
+        return lower + ((upper - lower) * 6 * thresh)
+    if (2 * thresh) < 1:
+        return upper
+    if (3 * thresh) < 2:
+        return lower + ((upper - lower) * 6 * ((2.0/3.0) - thresh))
+    return lower
+
+
+def rounded(floatval):
+
+    """
+    *** Needs description ***
+    """
+    return int(math.floor(floatval+0.5))
+
 
 def write_plot(
-        x_data, y_data, 
-        outfile, 
-        title_text, 
-        xlabel_text, ylabel_text, 
-        colours, 
-        labels=None,
-        ylim=None, 
-        type='lin',
-        marker='',
-        keys=None,
-        lw=2
-        ):
+        x_data, y_data, outfile, title_text, xlabel_text, ylabel_text, colours,
+        labels=None, ylim=None, typ='lin', marker='', keys=None, linew=2):
 
     """
     A general x-y plotting function.
     """
-    
+
     assert len(x_data) == len(y_data)
-    
     pylab.clf()
-    
-    for d in range(len(x_data)):
-        
-        if type == 'lin':
-            plot_string = 'pylab.plot(' 
-        elif type == 'log':
+    for indx in range(len(x_data)):
+        if typ == 'lin':
+            plot_string = 'pylab.plot('
+        elif typ == 'log':
             plot_string = 'pylab.loglog('
-        elif type == 'semilogy':
+        elif typ == 'semilogy':
             plot_string = 'pylab.semilogy('
-        elif type == 'semilogx':
+        elif typ == 'semilogx':
             plot_string = 'pylab.semilogx('
         else:
-            print "NetIO_plots::write_plot - unknown plot type."
+            print("NetIO_plots::write_plot - unknown plot type.")
             sys.exit()
 
         if keys != None:
-            colour = get_red_green_colour(keys[d])
+            colour = get_red_green_colour(keys[indx])
         else:
-            colour = colours[d]
+            colour = colours[indx]
 
-        plot_string += "x_data["+str(d)+"], y_data["+str(d)+"], " +\
+        plot_string += "x_data["+str(indx)+"], y_data["+str(indx)+"], " +\
                 "'" + colour + "'" + ", marker='"+marker+"'" +\
-                ", linewidth=%d)" % (lw)
-    
-        #print plot_string
+                ", linewidth=%d)" % (linew)
 
-        exec plot_string 
-    
+        #print(plot_string)
+
+        exec(plot_string)
+
     pylab.xlabel(xlabel_text)
     pylab.ylabel(ylabel_text)
     pylab.title(title_text)
     if labels != None:
-        lgd = pylab.legend(labels, loc=9, bbox_to_anchor=(0.5, -0.1), ncol=len(labels))
+        lgd = pylab.legend(
+            labels, loc=9, bbox_to_anchor=(0.5, -0.1), ncol=len(labels))
     if ylim != None:
         pylab.ylim(ylim[0], ylim[1])
     if labels != None:
-        pylab.savefig(outfile+".pdf", format='pdf', additional_artists=lgd, bbox_inches="tight")
-        pylab.savefig(outfile+".png", format='png', additional_artists=lgd, bbox_inches="tight")
-    else: 
+        pylab.savefig(
+            outfile+".pdf", format='pdf', additional_artists=lgd,
+            bbox_inches="tight")
+        pylab.savefig(
+            outfile+".png", format='png', additional_artists=lgd,
+            bbox_inches="tight")
+    else:
         pylab.savefig(outfile+".pdf", format='pdf')
         pylab.savefig(outfile+".png", format='png')
 
 
 def write_data(data, outfile, sep='\n'):
 
+    """
+    *** Needs description ***
+    """
     out = open(outfile, 'w')
-    for d in data:
-        out.write(str(d) + sep)
+    for item in data:
+        out.write(str(item) + sep)
     out.flush()
     out.close()
 
 
 def write_data_2d(data, outfile, sep1=',', sep2='\n'):
 
+    """
+    *** Needs description ***
+    """
     out = open(outfile, 'w')
-    for d1 in data:
-        for d2 in d1:
-            out.write(str(d2) + sep1)
+    for outer in data:
+        for inner in outer:
+            out.write(str(inner) + sep1)
         out.write(sep2)
     out.flush()
     out.close()
-
-

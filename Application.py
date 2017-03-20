@@ -1,6 +1,46 @@
+"""
+--------------------------------------------------------------------------------
+FILE: Application.py
+AUTH: thorsilver
+VERS: 1.0 March 2017
+REQS: Python 3.x (version 3.6 used)
+--------------------------------------------------------------------------------
+"""
+
+from __future__ import print_function # ensure Python 3.x print form known
 from math import tanh
 
-class Application:
+# --------------------------------------------------
+# Helper functions
+# --------------------------------------------------
+
+def _calculate_grant_quality(author, params, rng):
+    """
+    Calculate quality of grant.
+
+    Three components:
+    - time invested in grant writing
+    - research output to date
+    - (optionally) applicants research quality
+    - random noise
+    """
+    if author.time_grant <= 0.0:
+        print("Postdoc?")
+    quality = params['weight_grant'] * \
+              tanh(params['grant_slope'] * author.time_grant)
+    quality += (1 - params['weight_grant']) * \
+               tanh(params['research_slope'] * author.research_sum)
+    if params['rq_counts']:
+        quality += author.research_quality
+    noise = rng.normalvariate(0.0, params['grant_noise'])
+    quality *= (1.0 + noise)
+    return quality
+
+# --------------------------------------------------
+# Main class
+# --------------------------------------------------
+
+class Application(object):
 
     """
     A grant application.
@@ -13,50 +53,33 @@ class Application:
     """
 
     def __init__(self, author, params, rng):
-        self.author_id = author.id
+        self.author_id = author.ident
         self.author_time = author.time_grant
         self.author_quality = author.research_quality
-        self.grant_quality = self.calculate_grant_quality(author, params, rng)
-
+        self.grant_quality = _calculate_grant_quality(author, params, rng)
 
     def __cmp__(self, other):
         return cmp(other.grant_quality, self.grant_quality)
 
-
-    def calculate_grant_quality(self, author, params, rng):
+    def dummy1(self):
 
         """
-        Calculate quality of grant.
-
-        Three components:
-        - time invested in grant writing
-        - research output to date
-        - (optionally) applicants research quality
-        - random noise
+        *** Dummy method to ensure there is a method for this class ***
+        *** Remove this latr ***
         """
+        return self.grant_quality
 
-        if author.time_grant <= 0.0:
-            print "Postdoc?"
+    def dummy2(self):
 
-        quality = params['weight_grant'] * \
-                tanh(params['grant_slope'] * author.time_grant) 
+        """
+        *** Dummy method to ensure there is a method for this class ***
+        *** Remove this latr ***
+        """
+        return self.grant_quality
 
-        quality += (1 - params['weight_grant']) * \
-                tanh(params['research_slope'] * author.research_sum) 
-   
-        if params['rq_counts']:
-            quality += author.research_quality
-
-        noise = rng.normalvariate(0.0, params['grant_noise'])
-
-        quality *= (1.0 + noise)
-
-        return quality
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
 ###############################################################################
 ###############################################################################
-
-

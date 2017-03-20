@@ -1,12 +1,56 @@
+"""
+--------------------------------------------------------------------------------
+FILE: Academic.py
+AUTH: thorsilver
+VERS: 1.0 March 2017
+REQS: Python 3.x (version 3.6 used)
+--------------------------------------------------------------------------------
+"""
 from random import randint
 
-class Academic:
+# --------------------------------------------------
+# Helper functions
+# --------------------------------------------------
+
+def _res1(parm, quality):
+    """
+    Calc_research helper function (type 1)
+    """
+    return (1.0 - parm) * quality
+
+def _res2(parm, time, held, bonus, quality):
+    """
+    Calc_research helper function (type 2)
+    """
+    return ((1.0 + parm - time) + (held * bonus)) * quality
+
+def _res3(time, held, bonus, quality):
+    """
+    Calc_research helper function (type 3)
+    """
+    return ((1.0 - time) + (held * bonus)) * quality
+
+def _get_update_step(params, rng):
+    """
+    Get update step size.
+    """
+
+    if params['self_update_width_fixed']:
+        return params['self_update_width']
+    else:
+        return abs(rng.gauss(0.0, params['self_update_width']))
+
+# --------------------------------------------------
+# Main class
+# --------------------------------------------------
+
+class Academic(object):
 
     """
     An academic agent.
 
     Attributes:
-    - id : unique identifier
+    - ident : unique identifier
     - research_quality : quality of research (random float in range 0 - 1)
     - applying: True if agent is currently applying for grants
     - grant_held : grant held for current year (boolean 1/0)
@@ -24,31 +68,36 @@ class Academic:
 
     Time allocated to research is currently assumed to be 1.0 - time_grant
     """
+    # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, id, params, rng):
+    def __init__(self, ident, params, rng):
 
-        self.params = params
-        self.id = id
-        self.research_quality = rng.random()
         self.applying = True
-        self.grant_held = False
-        self.tenured = True
-        self.grant_count = 0 # total number of grants held
-        self.set_random_time_grant(params['init_time'], rng)
-        self.research = 0.0
-        self.research_sum = 0.0
-        self.memory = []    # grows at tail
-        self.postdoc_status = 0
-        self.former_postdoc = 0
-        self.exited_postdoc = 0
-        self.num_postdocs = 0
-        self.contract_length = 100
-        self.newb = 0
-        self.made_redundant = False
-        self.retired = False
         self.career_length = params['career_end']
+        self.contract_length = 100
+        self.exited_postdoc = 0
+        self.former_postdoc = 0
+        self.grant_count = 0    # total number of grants held
+        self.grant_held = False
+        self.ident = ident      # renamed by IW
+        self.made_redundant = False
+        self.memory = []        # grows at tail
+        self.newb = 0
+        self.num_postdocs = 0
+        self.params = params
+        self.postdoc_status = 0
+        self.research = 0.0
+        self.research_quality = rng.random()
+        self.research_sum = 0.0
+        self.retired = False
+        self.set_random_time_grant(params['init_time'], rng)
+        self.tenured = True
+        self.time_grant = 0     # added by IW
 
     def retire(self):
+        """
+        Retire *** description needed ***
+        """
         if self.career_length <= 10 and randint(1, 100) <= 20:
             self.made_redundant = True
             self.retired = True
@@ -66,59 +115,57 @@ class Academic:
         # else:
         self.time_grant = rng.random() / (1.0 / time_range)
         self.time_grant = int(self.time_grant * 10) / 10.0
-            # agent must invest a minimum of 10% of their time 
-            # (unless they drop out)
+        # agent must invest a minimum of 10% of their time
+        # (unless they drop out)
         if self.time_grant < 0.1:
             self.time_grant = 0.1
 
-    
-    def calc_research(self, time_grant, grant_held, grant_bonus, 
-            research_quality):
 
-        "Calculate agent research quality."
+    def calc_research(self, time_grant, grant_held, grant_bonus,
+                      research_quality):
+        """
+        Calculate agent research quality.
+        """
 
         if self.params['growing_pop'] == 1:
             if self.newb >= 1:
-                return (1.0 - self.params['newb_time']) * research_quality
+                return _res1(self.params['newb_time'], research_quality)
             elif self.grant_held:
-                return ((1.0 - self.params['manager_penalty'] - time_grant) + (grant_held * grant_bonus)) * research_quality
-            else:
-                return ((1.0 - time_grant) + (grant_held * grant_bonus)) * \
-                research_quality
-        
+                return _res2(self.params['manager_penalty'], time_grant,
+                             grant_held, grant_bonus, research_quality)
         elif self.params['use_postdocs'] == 1:
             if self.newb >= 1:
-                return (1.0 - self.params['newb_time']) * research_quality
+                return _res1(self.params['newb_time'], research_quality)
             elif self.contract_length <= 2 and self.postdoc_status == 1:
-                return (1.0 - self.params['jobhunt_time']) * research_quality
+                return _res1(self.params['jobhunt_time'], research_quality)
             elif self.grant_held:
-                return ((1.0 - self.params['manager_penalty'] - time_grant) + (grant_held * grant_bonus)) * research_quality
-            elif self.former_postdoc == 1 and self.params['mentored_pdrs'] == 1:
-                return ((1.0 + self.params['mentoring_bonus'] - time_grant) + (grant_held * grant_bonus)) * research_quality
-            else:
-                return ((1.0 - time_grant) + (grant_held * grant_bonus)) * \
-                research_quality
-        else:
-            return ((1.0 - time_grant) + (grant_held * grant_bonus)) * \
-                research_quality                
+                return _res2(self.params['manager_penalty'], time_grant,
+                             grant_held, grant_bonus, research_quality)
+            elif self.former_postdoc == 1 and \
+                 self.params['mentored_pdrs'] == 1:
+                return _res2(self.params['mentoring_bonus'], time_grant,
+                             grant_held, grant_bonus, research_quality)
+        # for anything else use _res3
+        return _res3(time_grant, grant_held, grant_bonus, research_quality)
 
 
     def produce_research(self, params):
 
         """
 	Calculate an agent's research output for a single year.
-	
+
 	Also updates research_sum and memory.
 	"""
 
-        self.research = self.calc_research(self.time_grant, 
-                self.grant_held, params['grant_bonus'], self.research_quality)
+        self.research = self.calc_research(
+            self.time_grant, self.grant_held, params['grant_bonus'],
+            self.research_quality)
         self.research_sum += self.research
         self.update_memory(params)
         return self.research
 
 
-    def get_mean_research(self, t):
+    def get_mean_research(self, iters):
 
         """
 	Get agent's mean research output over the preceding t iterations.
@@ -126,7 +173,7 @@ class Academic:
 	(or over less than t, if fewer iterations have occurred)
 	"""
 
-        output_values = [m[2] for m in self.memory[-t:]]
+        output_values = [m[2] for m in self.memory[-iters:]]
         if output_values == []:
             return 0.0
         else:
@@ -146,10 +193,12 @@ class Academic:
 
         "Ensure that an agents time_grant allocation is between 0 and 1."
 
-        if self.time_grant > 1.0: self.time_grant = 1.0
-        elif self.time_grant < 0.0: self.time_grant = 0.0
+        if self.time_grant > 1.0:
+            self.time_grant = 1.0
+        elif self.time_grant < 0.0:
+            self.time_grant = 0.0
 
-        # must make a minimum effort to apply; time_grant can only be 0 if 
+        # must make a minimum effort to apply; time_grant can only be 0 if
 	# applying is False.
         if self.applying and self.time_grant < 0.1:
             self.time_grant = 0.1
@@ -158,23 +207,12 @@ class Academic:
     def check_reentry(self, params, rng):
 
         "Possibly reintroduce a previously dropped-out agent."
-    
+
         if rng.random() < params['prob_reentry']:
             self.set_random_time_grant(params['reentry_range'], rng)
             self.applying = True
             self.memory = []
 
-
-    def get_update_step(self, params):
-
-        """
-        Get update step size.
-        """
-
-        if params['self_update_width_fixed']:
-            return params['self_update_width']
-        else:
-            return abs(rng.gauss(0.0, params['self_update_width']))
 
 
 ##############################################################################
@@ -192,8 +230,8 @@ class Academic:
         WCSS paper - THERMOSTAT model
         """
 
-        step = self.get_update_step(params)
-            
+        step = _get_update_step(params, rng)
+
         if not self.grant_held:
             #self.time_grant *= (1.0 + step)
             self.time_grant += step
@@ -201,7 +239,7 @@ class Academic:
             #self.time_grant *= (1.0 - step)
             self.time_grant -= step
 
-        if (self.applying == False):
+        if not self.applying:
             self.check_reentry(params, rng)
 
         self.check_time_bounds()
@@ -212,45 +250,46 @@ class Academic:
         """
         Update agent strategy based on self learning.
 
-        1. agents who do not hold a grant, but who have held a grant recently 
+        1. agents who do not hold a grant, but who have held a grant recently
             increase their time allocation
-        2. agents who do not hold a grant, and who have not held a grant 
+        2. agents who do not hold a grant, and who have not held a grant
             recently stop applying (invest no time)
-        3. agents who hold a grant and have consistently held a grant in 
+        3. agents who hold a grant and have consistently held a grant in
             recent iterations decrease their time allocation
-        4. agents who hold a grant, but who have not held a grant recently 
+        4. agents who hold a grant, but who have not held a grant recently
             hold their time constant
 
-        Agents who have previously stopped applying have a probability of 
+        Agents who have previously stopped applying have a probability of
         re-entering competition at each iteration.
 
         WCSS paper - MEMORY model (with various memory / re-entry parameters)
         """
 
-        step = self.get_update_step(params)
+        step = _get_update_step(params, rng)
         recent = [x[1] for x in self.memory]
-        r = params['run_length']
+        runl = params['run_length']
 
         if not self.grant_held:
-            if len(recent) > r and recent[-r:] == [False]*r:
+            if len(recent) > runl and recent[-runl:] == [False]*runl:
                 self.time_grant = 0.0
                 self.applying = False
             else:
                 #self.time_grant *= (1.0 + step)
                 self.time_grant += step
         else:
-            if len(recent) > r and recent[-r:] == [True]*r:
+            if len(recent) > runl and recent[-runl:] == [True]*runl:
                 #self.time_grant *= (1.0 - step)
                 self.time_grant -= step
 
-        if (self.applying == False and self.made_redundant == False):
+        if not self.applying and not self.made_redundant:
             self.check_reentry(params, rng)
 
         self.check_time_bounds()
 
-###############################################################################
-###############################################################################
-###############################################################################
-###############################################################################
-###############################################################################
+    # pylint: enable=too-many-instance-attributes
 
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
