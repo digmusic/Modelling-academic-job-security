@@ -37,10 +37,10 @@ def get_mean(data):
     """
     *** Needs description ***
     """
-    if len(data) > 0:
+    datalen = len(data)
+    if datalen > 0:
         return sum(data)/len(data)
-    else:
-        return 0
+    return 0
 
 
 def get_mean_and_sum(data):
@@ -182,6 +182,7 @@ def write_plot(
 
         #print(plot_string)
 
+        # *** Needs refactoring to remove the exec - not good practice ***
         exec(plot_string)
 
     pylab.xlabel(xlabel_text)

@@ -58,8 +58,9 @@ class Application(object):
         self.author_quality = author.research_quality
         self.grant_quality = _calculate_grant_quality(author, params, rng)
 
-    def __cmp__(self, other):
-        return cmp(other.grant_quality, self.grant_quality)
+        # *** cmp is not defined anywhere ***
+    # def __cmp__(self, other):
+    #     return cmp(other.grant_quality, self.grant_quality)
 
     def dummy1(self):
 

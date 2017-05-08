@@ -37,8 +37,7 @@ def _get_update_step(params, rng):
 
     if params['self_update_width_fixed']:
         return params['self_update_width']
-    else:
-        return abs(rng.gauss(0.0, params['self_update_width']))
+    return abs(rng.gauss(0.0, params['self_update_width']))
 
 # --------------------------------------------------
 # Main class
@@ -176,8 +175,7 @@ class Academic(object):
         output_values = [m[2] for m in self.memory[-iters:]]
         if output_values == []:
             return 0.0
-        else:
-            return sum(output_values) / len(output_values)
+        return sum(output_values) / len(output_values)
 
 
     def update_memory(self, params):

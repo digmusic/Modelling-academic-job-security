@@ -97,7 +97,7 @@ class FundingAgency(object):
         """
         Return a list of authors whose applications were successful.
         """
-        return self._get_grant_recipients(self, params, size, 0.75, False)
+        return self._get_grant_recipients(params, size, 0.75, False)
 
 
     def get_grant_recipients_pdr(self, params, size):
@@ -105,7 +105,7 @@ class FundingAgency(object):
         """
         Return a list of authors whose applications were successful.
         """
-        return self._get_grant_recipients(self, params, size, 1.0, False)
+        return self._get_grant_recipients(params, size, 1.0, False)
 
 
     def init_grants(self, params):
@@ -130,7 +130,7 @@ class FundingAgency(object):
         """
         Return a list of successful applications in limited funding case.
         """
-        return self._get_grant_recipients(self, params, size, 1.0, True)
+        return self._get_grant_recipients(params, size, 1.0, True)
 
 ###############################################################################
 ###############################################################################

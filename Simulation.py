@@ -28,49 +28,55 @@ class Simulation(object):
         self.plot_colours = Utils.create_plot_colour_dict()
         self.endgame = int(self.params['iterations'] * 0.9)
 
+        # *** Initialisations added by IW - need checking ***
+        self.final_stats = []
+        self.mean_r = 0
+        self.mean_r_former_pdr = 0
+        self.mean_r_old_academic = 0
+        self.mean_r_postdoc = 0
+        self.redundancies_total = 0
+        self.redundancies_total = 0
+        self.sum_r = 0
+
+
     def init_stats(self):
 
         """
         Initialise data structures for storing data.
         """
-        self.all_stats = []     # for endgame iterations
-        self.final_stats = []   # for final iteration
-        self.alloc = []
+        self.academic_total = []
         self.accept = []
-
-        self.all_tg = []
-        self.tg_g = []
-        self.tg_fg = []
-        self.tg_ng = []
-
+        self.accepted_grants = []
         self.all_r = []
-        self.r_g = []
-        self.r_fg = []
-        self.r_ng = []
-        self.r_pdr = []
-        self.r_former_pdr = []
-        self.r_old_academic = []
-
         self.all_rq = []
-        self.rq_g = []
-        self.rq_ng = []
-        self.rq_fail = []
-        self.rq_na = []
-        self.rq_pdr = []
-        self.rq_former_pdr = []
-        self.rq_old_academic = []
-
-        self.corr_rq_tg = []
+        self.all_stats = []     # for endgame iterations
+        self.all_tg = []
+        self.alloc = []
         self.corr_rq_apply = []
         self.corr_rq_held = []
-
-        self.pdr_total = []
-        self.academic_total = []
-        self.exited_total = []
-        self.accepted_grants = []
+        self.corr_rq_tg = []
         self.dynamic_roi = []
+        self.exited_total = []
+        self.final_stats = []   # for final iteration
+        self.pdr_total = []
+        self.r_fg = []
+        self.r_former_pdr = []
+        self.r_g = []
+        self.r_ng = []
+        self.r_old_academic = []
+        self.r_pdr = []
         self.roi_sum = []
         self.roi_sum_pdr = []
+        self.rq_fail = []
+        self.rq_former_pdr = []
+        self.rq_g = []
+        self.rq_na = []
+        self.rq_ng = []
+        self.rq_old_academic = []
+        self.rq_pdr = []
+        self.tg_fg = []
+        self.tg_g = []
+        self.tg_ng = []
 
 
     def run(self):
@@ -79,6 +85,7 @@ class Simulation(object):
         Run the experiment.
         """
         iterations = 0
+        threshold = 100                               # *** needs looking at ***
         for indx in range(self.params['iterations']): # *** was xrange ***
             iterations += 1
             self.sim.int_academic_count()
@@ -94,7 +101,7 @@ class Simulation(object):
                 self.sim.update_postdocs()
             if self.params['use_retirement']:
                 self.sim.update_careers()
-                self.save_base_stats(t)
+                self.save_base_stats(threshold)
             if self.params['write_output']:
                 self.save_plot_stats()
                 print('Total agents: {}'.format(len(self.sim.agents)))
@@ -122,6 +129,7 @@ class Simulation(object):
 	due to noise in the calculation of grant quality.
         """
 
+        threshold = 100             # *** invented by IW: needs looking at ***
         for agent in self.sim.agents:
             agent.time_grant = fixed_time
 
@@ -130,7 +138,10 @@ class Simulation(object):
             self.sim.produce_applications()
             self.sim.evaluate_applications()
             self.sim.produce_research()
-            self.save_base_stats(t)
+            self.save_base_stats(threshold)
+
+            # *** params gives pylint warning:
+            # No value for argument 'params' in method call ***
             if self.params['write_output']:
                 self.save_plot_stats()
             if self.params['use_postdocs'] == 1:
@@ -206,14 +217,13 @@ class Simulation(object):
         total_r_sum = 0
         count = 0
         for snap in self.all_stats:
-            for a in snap:
-                total_r_sum += a[5]
+            for item in snap:
+                total_r_sum += item[5]
                 count += 1
                 #assert count == 0, "Div by zero, dipshit"
         if not count == 0:
             return total_r_sum / count
-        else:
-            return 0
+        return 0
 
     def calc_mean_time_grant(self):
 
@@ -223,8 +233,8 @@ class Simulation(object):
         mean_tg_sum = 0
         count = 0
         for snap in self.all_stats:
-            for a in snap:
-                mean_tg_sum += a[3]
+            for item in snap:
+                mean_tg_sum += item[3]
                 count += 1
         return mean_tg_sum / count
 
@@ -239,9 +249,9 @@ class Simulation(object):
         for snap in self.all_stats:
             rq_list = []
             held_list = []
-            for a in snap:
-                rq_list.append(a[1])
-                held_list.append(a[4])
+            for item in snap:
+                rq_list.append(item[1])
+                held_list.append(item[4])
                 corr_rq_held_sum += pylab.corrcoef(rq_list, held_list)[0][1]
                 count += 1
         return corr_rq_held_sum / count
@@ -273,12 +283,12 @@ class Simulation(object):
         """
         Calculate ROI - amount of extra total research bought per grant.
         """
-        res_values = [a.research for agent in self.sim.agents
+        res_values = [agent.research for agent in self.sim.agents
                       if not agent.made_redundant]
         total_res = sum(res_values)
         total_res_nof = self.sim.estimate_output_sum()
         roi = ((total_res - total_res_nof) - funding_units) / funding_units
-        if len(res_values)>= 300 and roi >= -2.5:
+        if len(res_values) >= 300 and roi >= -2.5:
             print('ROI jumps here: {} {} {}'.format(
                 roi, total_res, total_res_nof))
             #quit()
@@ -354,19 +364,22 @@ class Simulation(object):
                             self.params['prefix']+"final_stats.csv")
 
 
+        # *** lw gives pylint error:
+        # Unexpected keyword argument 'lw' in function call ***
+
         #### WRITE PLOTS
 
         # number of grants vs research quality
         Utils.write_plot([self.sim.all_rq()], [self.sim.all_grant_counts()],
                          self.params['prefix']+"lifetime_grants", "lifetime grants",
                          'research quality', 'grants awarded', self.plot_colours,
-                         ylim = (0, int(self.params['iterations'])), marker='o',lw=0)
+                         ylim=(0, int(self.params['iterations'])), marker='o', lw=0)
 
         # number of grants awarded
         #Utils.write_plot([range(len(self.alloc))], [self.alloc],
         #       self.params['prefix']+"grants_awarded", "grants awarded",
         #      'iterations', 'grants_awarded', self.plot_colours,
-        #     ylim = (0, int(self.params['grant_proportion'] *
+        #     ylim=(0, int(self.params['grant_proportion'] *
         #        self.params['pop_size']))
 
         # total postdocs
@@ -389,7 +402,7 @@ class Simulation(object):
         Utils.write_plot([range(len(self.accept))], [self.accept],
                          self.params['prefix']+"accept_rate", "acceptance rate",
                          'iterations', 'acceptance rate', self.plot_colours,
-                         ylim = (0, 1))
+                         ylim=(0, 1))
 
         # # all time_grant values
         # Utils.write_plot([range(len(t_all_tg[0]))]*len(t_all_tg), t_all_tg,
@@ -531,5 +544,22 @@ class Simulation(object):
             [self.corr_rq_tg, self.corr_rq_apply, self.corr_rq_held],
             self.params['prefix']+"corr_rq", '',
             'Iterations', 'Correlation Coef.', self.plot_colours,
-            labels = ('(RQ, TG)', '(RQ, Apply)', '(RQ, Held)'),
-            ylim = (-0.75,0.75))
+            labels=('(RQ, TG)', '(RQ, Apply)', '(RQ, Held)'),
+            ylim=(-0.75, 0.75))
+
+        # dummy assignments to make use of unused variables that have
+        # been used in commented out sections of code. Feel free to
+        # remove this
+        dummy = t_all_tg
+        dummy = t_all_r
+        dummy = sum_rq
+        dummy = sum_rq
+        dummy = sum_rq_grant
+        dummy = sum_rq_no_grant
+        dummy = sum_rq_fail
+        dummy = sum_rq_na
+        dummy = sum_rq_pdr
+        dummy = mean_rq_former_pdr
+        dummy = sum_rq_former_pdr
+        dummy = mean_rq_old_academic
+        dummy = sum_rq_old_academic

@@ -16,6 +16,7 @@ from __future__ import print_function # ensure Python 3.x print form known
 from random import Random
 from random import randint
 import random
+import sys
 import math
 from FundingAgency import FundingAgency
 from Academic import Academic
@@ -50,8 +51,8 @@ class Population(object):
         # initialise agents
         self.funding_body = FundingAgency(params)
         self.agents = []
-        for i in range(self.params['pop_size']): # *** was xrange ***
-            self.agents.append(Academic(i, params, self.rng))
+        for item in range(self.params['pop_size']): # *** was xrange ***
+            self.agents.append(Academic(item, params, self.rng))
 
         # calculate derived parameters
         params['grant_count'] = int(
@@ -116,9 +117,12 @@ class Population(object):
         """
         Produce applications by each agent (who is applying).
         """
-        [self.funding_body.add_application(
+
+        # *** dummy introduced as pylint complained of a lack of assignment
+        # otherwise, so needs sorting out ***
+        dummy = [self.funding_body.add_application(
             Application(agent, self.params, self.rng), self.rng)
-         for agent in self.agents if agent.applying]
+                 for agent in self.agents if agent.applying]
 
 
     def evaluate_applications(self):
@@ -201,7 +205,7 @@ class Population(object):
                 elif self.params['learning_type'] == 'memory':
                     agent.update_strategy_self_memory(self.params, self.rng)
                 else:
-                    System.exit("Unknown learning type")
+                    sys.exit("Unknown learning type")
 
 
     def clear_all(self):
@@ -259,7 +263,8 @@ class Population(object):
                    and not agent.made_redundant]
         promotions_count = 0
         redundancies_count = 0
-        if len(leavers) > 0:
+        leavers_len = len(leavers)
+        if leavers_len > 0:
             ranked_leavers = sorted(
                 leavers, key=lambda x: x.research_quality, reverse=True)
             candidate_num = int(math.ceil(
@@ -408,8 +413,7 @@ class Population(object):
                 allocated += 1
         if submitted > 0:
             return allocated, float(allocated) / submitted
-        else:
-            return allocated, 0.0
+        return allocated, 0.0
 
 
     def all_rq(self):
