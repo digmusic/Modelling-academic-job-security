@@ -1,0 +1,35 @@
+{
+  "palettes" :
+  [
+    [ "Orange", "Salmon", "Violet", "Chocolate", "LightSteelBlue" ],
+    [ "Orange", "Salmon" ],
+    [ "Orange", "Salmon", "Violet" ],
+    [ "Orange", "Salmon", "Violet", "Green" ]
+  ],
+  "default_parms"  : "json/_default.json",
+  "gdata_file"     : "runs/GEMSA_data_new.txt",
+  "gemsa_data"     : "GEMSA_data_new",
+  "gemsa_means"    : "GEMSA_means_new",
+  "gemsa_outs"     : "GEMSA_outputs_new",
+  "gmeans_file"    : "runs/GEMSA_means_new.txt",
+  "gout_file"      : "runs/GEMSA_outputs_new.txt",
+  "incrun_mean"    : "incRunSet_meanR0",
+  "incrun_roi"     : "incRunSet_ROI",
+  "incrun_sack"    : "incRunSet_sacked",
+  "incrun_tot"     : "incRunSet_totalRO",
+  "json_file_ext"  : ".json",
+  "json_subdir"    : "json/",
+  "memrun_mean"    : "memRunSet_meanRO",
+  "memrun_roi"     : "memRunSet_ROI",
+  "memrun_sack"    : "memRunSet_sacked",
+  "memrun_tot"     : "memRunSet_totalRO",
+  "prorun_mean"    : "promoRunSet_meanRO",
+  "prorun_roi"     : "promoRunSet_ROI",
+  "prorun_sack"    : "promoRunSet_sacked",
+  "prorun_tot"     : "promoRunSet_totalRO",
+  "roi_file"       : "runs/roi_test.csv",
+  "roi_test"       : "roi_test",
+  "runs_subdir"    : "runs/",
+  "summ_data"      : "summ_data",
+  "summ_stats"     : "summ_stats"
+}
