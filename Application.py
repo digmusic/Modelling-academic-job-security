@@ -2,7 +2,8 @@
 --------------------------------------------------------------------------------
 FILE: Application.py
 AUTH: thorsilver
-VERS: 1.0 March 2017
+UPDT: digimus
+VERS: 1.1 July 2017
 REQS: Python 3.x (version 3.6 used)
 --------------------------------------------------------------------------------
 """
@@ -27,9 +28,9 @@ def _calculate_grant_quality(author, params, rng):
     if author.time_grant <= 0.0:
         print("Postdoc?")
     quality = params['weight_grant'] * \
-              tanh(params['grant_slope'] * author.time_grant)
-    quality += (1 - params['weight_grant']) * \
-               tanh(params['research_slope'] * author.research_sum)
+              tanh(params['grant_slope'] * author.time_grant) + \
+              (1 - params['weight_grant']) * \
+              tanh(params['research_slope'] * author.research_sum)
     if params['rq_counts']:
         quality += author.research_quality
     noise = rng.normalvariate(0.0, params['grant_noise'])
@@ -58,15 +59,24 @@ class Application(object):
         self.author_quality = author.research_quality
         self.grant_quality = _calculate_grant_quality(author, params, rng)
 
-        # *** cmp is not defined anywhere ***
-    # def __cmp__(self, other):
-    #     return cmp(other.grant_quality, self.grant_quality)
+    def __cmp__(self, other):
+        """
+        Simulate the deprecated cmp function to return -1 if a<b, 0 if a==b,
+        or 1 otherwise. This replaces the original call of
+        cmp(other.grant_quality, self.grant_quality)
+        """
+
+        if other.grant_quality < self.grant_quality:
+            return -1
+        elif other.grant_quality == self.grant_quality:
+            return 0
+        return 1
 
     def dummy1(self):
 
         """
         *** Dummy method to ensure there is a method for this class ***
-        *** Remove this latr ***
+        *** Remove this later ***
         """
         return self.grant_quality
 
@@ -74,7 +84,7 @@ class Application(object):
 
         """
         *** Dummy method to ensure there is a method for this class ***
-        *** Remove this latr ***
+        *** Remove this later ***
         """
         return self.grant_quality
 

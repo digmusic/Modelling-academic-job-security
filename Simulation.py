@@ -3,13 +3,14 @@
 FILE: Simulation.py
 DESC: Simulation functions
 AUTH: thorsilver
-VERS: 1.0 March 2017
+UPDT: digimus
+VERS: 1.1 July 2017
 REQS: Python 3.x (version 3.6 used)
 --------------------------------------------------------------------------------
 """
 
 from __future__ import print_function # ensure Python 3.x print form known
-import pylab
+import pylab                          # external
 from Population import Population
 import Utils
 
@@ -20,7 +21,6 @@ class Simulation(object):
     """
 
     def __init__(self, params):
-
         self.params = params
         self.init_stats()
         self.sim = Population(params)
@@ -79,13 +79,12 @@ class Simulation(object):
         self.tg_ng = []
 
 
-    def run(self):
+    def run(self, threshold):
 
         """
         Run the experiment.
         """
         iterations = 0
-        threshold = 100                               # *** needs looking at ***
         for indx in range(self.params['iterations']): # *** was xrange ***
             iterations += 1
             self.sim.int_academic_count()
@@ -146,7 +145,7 @@ class Simulation(object):
                 self.save_plot_stats()
             if self.params['use_postdocs'] == 1:
                 self.sim.update_postdocs()
-                self.sim.hire_postdocs()
+                self.sim.hire_postdocs(self.params) # added by ES/IW May 24th
             if self.params['growing_pop'] == 1:
                 self.sim.update_newbies()
 
@@ -212,7 +211,7 @@ class Simulation(object):
     def calc_mean_total_output(self):
 
         """
-        *** Needs description ***
+        Calculate mean time spent on grant applications
         """
         total_r_sum = 0
         count = 0
@@ -228,7 +227,7 @@ class Simulation(object):
     def calc_mean_time_grant(self):
 
         """
-        *** Needs description ***
+        Calculate mean time spent on grant applications
         """
         mean_tg_sum = 0
         count = 0
@@ -236,13 +235,15 @@ class Simulation(object):
             for item in snap:
                 mean_tg_sum += item[3]
                 count += 1
+
         return mean_tg_sum / count
 
 
     def calc_mean_corr_rq_held(self):
 
         """
-        *** Needs description ***
+        Calculate means and correlations related to research quality for
+        agents holding grants
         """
         corr_rq_held_sum = 0
         count = 0
@@ -254,6 +255,7 @@ class Simulation(object):
                 held_list.append(item[4])
                 corr_rq_held_sum += pylab.corrcoef(rq_list, held_list)[0][1]
                 count += 1
+
         return corr_rq_held_sum / count
 
 
@@ -356,12 +358,13 @@ class Simulation(object):
         self.redundancies_total = len(
             [agent for agent in self.sim.agents if agent.made_redundant])
 
-        Utils.write_data_2d(self.sim.funding_body.successful_app_stats,
-                            self.params['prefix']+"successful_app_stats.csv")
+        Utils.write_data_2d(
+            self.sim.funding_body.successful_app_stats,
+            self.params['prefix']+"successful_app_stats.csv")
 
         # save final iteration stats
-        Utils.write_data_2d(self.final_stats,
-                            self.params['prefix']+"final_stats.csv")
+        Utils.write_data_2d(
+            self.final_stats, self.params['prefix']+"final_stats.csv")
 
 
         # *** lw gives pylint error:
@@ -370,10 +373,11 @@ class Simulation(object):
         #### WRITE PLOTS
 
         # number of grants vs research quality
-        Utils.write_plot([self.sim.all_rq()], [self.sim.all_grant_counts()],
-                         self.params['prefix']+"lifetime_grants", "lifetime grants",
-                         'research quality', 'grants awarded', self.plot_colours,
-                         ylim=(0, int(self.params['iterations'])), marker='o', lw=0)
+        Utils.write_plot(
+            [self.sim.all_rq()], [self.sim.all_grant_counts()],
+            self.params['prefix']+"lifetime_grants", "lifetime grants",
+            'research quality', 'grants awarded', self.plot_colours,
+            ylim=(0, int(self.params['iterations'])), marker='o', linew=0)
 
         # number of grants awarded
         #Utils.write_plot([range(len(self.alloc))], [self.alloc],
@@ -384,9 +388,10 @@ class Simulation(object):
 
         # total postdocs
 
-        Utils.write_plot([range(len(self.pdr_total))], [self.pdr_total],
-                         self.params['prefix']+"total_pdrs", "Total Postdocs",
-                         'Iterations', 'Total postdocs', self.plot_colours)
+        Utils.write_plot(
+            [range(len(self.pdr_total))], [self.pdr_total],
+            self.params['prefix']+"total_pdrs", "Total Postdocs",
+            'Iterations', 'Total postdocs', self.plot_colours)
 
         # total postdocs vs total academics
 
@@ -399,10 +404,10 @@ class Simulation(object):
             labels=('Postdocs', 'Academics', 'Leavers'))
 
         # acceptance rate (allocated / submitted)
-        Utils.write_plot([range(len(self.accept))], [self.accept],
-                         self.params['prefix']+"accept_rate", "acceptance rate",
-                         'iterations', 'acceptance rate', self.plot_colours,
-                         ylim=(0, 1))
+        Utils.write_plot(
+            [range(len(self.accept))], [self.accept],
+            self.params['prefix']+"accept_rate", "acceptance rate",
+            'iterations', 'acceptance rate', self.plot_colours, ylim=(0, 1))
 
         # # all time_grant values
         # Utils.write_plot([range(len(t_all_tg[0]))]*len(t_all_tg), t_all_tg,
@@ -547,9 +552,9 @@ class Simulation(object):
             labels=('(RQ, TG)', '(RQ, Apply)', '(RQ, Held)'),
             ylim=(-0.75, 0.75))
 
-        # dummy assignments to make use of unused variables that have
+        # *** dummy assignments to make use of unused variables that have
         # been used in commented out sections of code. Feel free to
-        # remove this
+        # remove this ***
         dummy = t_all_tg
         dummy = t_all_r
         dummy = sum_rq

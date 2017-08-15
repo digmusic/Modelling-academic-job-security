@@ -3,7 +3,8 @@
 FILE: Population.py
 DESC: ***
 AUTH: thorsilver
-VERS: 1.0 March 2017
+UPDT: digimus
+VERS: 1.1 July 2017
 REQS: Python 3.x (version 3.6 used)
 --------------------------------------------------------------------------------
 """
@@ -117,9 +118,7 @@ class Population(object):
         """
         Produce applications by each agent (who is applying).
         """
-
-        # *** dummy introduced as pylint complained of a lack of assignment
-        # otherwise, so needs sorting out ***
+        # *** Dummy supplied by IW ***
         dummy = [self.funding_body.add_application(
             Application(agent, self.params, self.rng), self.rng)
                  for agent in self.agents if agent.applying]
@@ -536,15 +535,6 @@ class Population(object):
                 if not agent.grant_held]
 
 
-    # *** already defined earlier in this code ***
-    # def all_rq(self):
-
-    #     """
-    #     Return a list of rq values of all agents.
-    #     """
-    #     return [agent.research_quality for agent in self.agents]
-
-
     def all_rq_grant(self):
 
         """
@@ -697,7 +687,7 @@ class Population(object):
     def print_all(self):
 
         """
-        *** do something ***
+        Print all agent info for debugging if needed
         """
         for agent in self.agents:
             agent.print_all()

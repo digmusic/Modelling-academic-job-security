@@ -2,7 +2,8 @@
 --------------------------------------------------------------------------------
 FILE: FundingAgency.py
 AUTH: thorsilver
-VERS: 1.0 March 2017
+UPDT: digimus
+VERS: 1.1 July 2017
 REQS: Python 3.x (version 3.6 used)
 --------------------------------------------------------------------------------
 """
@@ -82,15 +83,15 @@ class FundingAgency(object):
     def rank_applications(self):
 
         """
-        *** Description ***
+        Rank submitted appliations by grant quality
         """
 
-        # *** Need to specify a key to sort on? Currently complains of
-        # TypeError: '<' not supported between instances of
-        # 'Application' and 'Application' ***
+        # *** May be ok now. Need to specify a key to sort on?
+        # Currently complains of TypeError: '<' not supported between
+        # instances of 'Application' and 'Application' ***
 
         for pool in self.pools:
-            pool.sort(key=lambda Application: Application.grant_quality)
+            pool.sort(key=lambda item: item.grant_quality)
 
     def get_grant_recipients(self, params, size):
 
@@ -111,7 +112,7 @@ class FundingAgency(object):
     def init_grants(self, params):
 
         """
-        *** Description ***
+        Set number of available grants based on simulation parameters
         """
         self.num_grants = params['starting_grant_fund']
 
@@ -119,7 +120,7 @@ class FundingAgency(object):
     def update_grants(self, params):
 
         """
-        *** Description ***
+        Increase available grants based on yearly_increase parameter
         """
         self.num_grants += self.num_grants * params['yearly_increase']
         self.num_grants = int(self.num_grants)

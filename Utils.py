@@ -3,15 +3,16 @@
 FILE: Utils.py
 DESC: Utility functions for the simulation
 AUTH: thorsilver
-VERS: 1.0 March 2017
+UPDT: digimus
+VERS: 1.1 July 2017
 REQS: Python 3.x (version 3.6 used)
 --------------------------------------------------------------------------------
 """
 from __future__ import print_function # ensure Python 3.x print form known
-import sys
-import os
 import math
-import pylab
+import os
+import sys
+import pylab                    # external
 
 def create_dir(dir_name):
 
@@ -141,7 +142,6 @@ def hue_2_rgb(lower, upper, thresh):         # hue_2_rgb
 
 
 def rounded(floatval):
-
     """
     *** Needs description ***
     """
@@ -151,7 +151,6 @@ def rounded(floatval):
 def write_plot(
         x_data, y_data, outfile, title_text, xlabel_text, ylabel_text, colours,
         labels=None, ylim=None, typ='lin', marker='', keys=None, linew=2):
-
     """
     A general x-y plotting function.
     """
@@ -159,31 +158,24 @@ def write_plot(
     assert len(x_data) == len(y_data)
     pylab.clf()
     for indx in range(len(x_data)):
-        if typ == 'lin':
-            plot_string = 'pylab.plot('
-        elif typ == 'log':
-            plot_string = 'pylab.loglog('
-        elif typ == 'semilogy':
-            plot_string = 'pylab.semilogy('
-        elif typ == 'semilogx':
-            plot_string = 'pylab.semilogx('
-        else:
-            print("NetIO_plots::write_plot - unknown plot type.")
-            sys.exit()
-
         if keys != None:
             colour = get_red_green_colour(keys[indx])
         else:
             colour = colours[indx]
-
-        plot_string += "x_data["+str(indx)+"], y_data["+str(indx)+"], " +\
+        plot_string = "x_data["+str(indx)+"], y_data["+str(indx)+"], " +\
                 "'" + colour + "'" + ", marker='"+marker+"'" +\
-                ", linewidth=%d)" % (linew)
-
-        #print(plot_string)
-
-        # *** Needs refactoring to remove the exec - not good practice ***
-        exec(plot_string)
+                ", linewidth=%d" % (linew)
+        if typ == 'lin':
+            pylab.plot(plot_string)
+        elif typ == 'log':
+            pylab.loglog(plot_string)
+        elif typ == 'semilogy':
+            pylab.semilogy(plot_string)
+        elif typ == 'semilogx':
+            pylab.semilogx(plot_string)
+        else:
+            print("NetIO_plots::write_plot - unknown plot type.")
+            sys.exit()
 
     pylab.xlabel(xlabel_text)
     pylab.ylabel(ylabel_text)

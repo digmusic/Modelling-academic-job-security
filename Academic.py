@@ -2,7 +2,8 @@
 --------------------------------------------------------------------------------
 FILE: Academic.py
 AUTH: thorsilver
-VERS: 1.0 March 2017
+UPDT: digimus
+VERS: 1.1 July 2017
 REQS: Python 3.x (version 3.6 used)
 --------------------------------------------------------------------------------
 """
@@ -11,6 +12,15 @@ from random import randint
 # --------------------------------------------------
 # Helper functions
 # --------------------------------------------------
+
+def _get_update_step(params, rng):
+    """
+    Get update step size.
+    """
+
+    if params['self_update_width_fixed']:
+        return params['self_update_width']
+    return abs(rng.gauss(0.0, params['self_update_width']))
 
 def _res1(parm, quality):
     """
@@ -29,15 +39,6 @@ def _res3(time, held, bonus, quality):
     Calc_research helper function (type 3)
     """
     return ((1.0 - time) + (held * bonus)) * quality
-
-def _get_update_step(params, rng):
-    """
-    Get update step size.
-    """
-
-    if params['self_update_width_fixed']:
-        return params['self_update_width']
-    return abs(rng.gauss(0.0, params['self_update_width']))
 
 # --------------------------------------------------
 # Main class
@@ -93,20 +94,57 @@ class Academic(object):
         self.tenured = True
         self.time_grant = 0     # added by IW
 
+
+
+    # --------------------------------------------------
+    # Independent methods
+    # --------------------------------------------------
+
+    def check_time_bounds(self):
+        """
+        Ensure that an agents time_grant allocation is between 0 and 1.
+        """
+
+        if self.time_grant > 1.0:
+            self.time_grant = 1.0
+        elif self.time_grant < 0.0:
+            self.time_grant = 0.0
+
+        # must make a minimum effort to apply; time_grant can only be 0 if
+	# applying is False.
+        if self.applying and self.time_grant < 0.1:
+            self.time_grant = 0.1
+
+
+    def get_mean_research(self, iters):
+
+        """
+	Get agent's mean research output over the preceding t iterations.
+
+	(or over less than t, if fewer iterations have occurred)
+	"""
+
+        output_values = [m[2] for m in self.memory[-iters:]]
+        if output_values == []:
+            return 0.0
+        return sum(output_values) / len(output_values)
+
+
     def retire(self):
         """
-        Retire *** description needed ***
+        Check the career length of the agent. If they have been in post
+        for 10 years or more there's a 20% chance in a given year they
+        may choose to retire or leave the profession.
+
         """
-        if self.career_length <= 10 and randint(1, 100) <= 20:
+        if self.career_length >= 10 and randint(1, 100) <= 20:
             self.made_redundant = True
             self.retired = True
             self.applying = False
 
     def set_random_time_grant(self, time_range, rng):
-
         """
         Randomise the time allocated to grant writing.
-
         Current modification limits to 0.1 increments.
         """
         # if self.postdoc_status == 1:
@@ -119,6 +157,30 @@ class Academic(object):
         if self.time_grant < 0.1:
             self.time_grant = 0.1
 
+
+    def update_memory(self, params):
+        """
+        Update an agent's memory with current strategy, success and output.
+        """
+
+        self.memory.append((self.time_grant, self.grant_held, self.research))
+        if len(self.memory) > params['memory_size']:
+            del self.memory[0]
+
+
+    # --------------------------------------------------
+    # Level 0 methods: dependent upon helpers
+    # --------------------------------------------------
+
+    def check_reentry(self, params, rng):
+        """
+        Possibly reintroduce a previously dropped-out agent.
+        """
+
+        if rng.random() < params['prob_reentry']:
+            self.set_random_time_grant(params['reentry_range'], rng)
+            self.applying = True
+            self.memory = []
 
     def calc_research(self, time_grant, grant_held, grant_bonus,
                       research_quality):
@@ -140,19 +202,20 @@ class Academic(object):
             elif self.grant_held:
                 return _res2(self.params['manager_penalty'], time_grant,
                              grant_held, grant_bonus, research_quality)
-            elif self.former_postdoc == 1 and \
-                 self.params['mentored_pdrs'] == 1:
+            elif self.former_postdoc == 1 and self.params['mentored_pdrs'] == 1:
                 return _res2(self.params['mentoring_bonus'], time_grant,
                              grant_held, grant_bonus, research_quality)
         # for anything else use _res3
         return _res3(time_grant, grant_held, grant_bonus, research_quality)
 
+    # --------------------------------------------------
+    # Level 1 methods
+    # --------------------------------------------------
 
     def produce_research(self, params):
 
         """
 	Calculate an agent's research output for a single year.
-
 	Also updates research_sum and memory.
 	"""
 
@@ -163,85 +226,7 @@ class Academic(object):
         self.update_memory(params)
         return self.research
 
-
-    def get_mean_research(self, iters):
-
-        """
-	Get agent's mean research output over the preceding t iterations.
-
-	(or over less than t, if fewer iterations have occurred)
-	"""
-
-        output_values = [m[2] for m in self.memory[-iters:]]
-        if output_values == []:
-            return 0.0
-        return sum(output_values) / len(output_values)
-
-
-    def update_memory(self, params):
-
-        "Update an agent's memory with current strategy, success and output."
-
-        self.memory.append((self.time_grant, self.grant_held, self.research))
-        if len(self.memory) > params['memory_size']:
-            del self.memory[0]
-
-
-    def check_time_bounds(self):
-
-        "Ensure that an agents time_grant allocation is between 0 and 1."
-
-        if self.time_grant > 1.0:
-            self.time_grant = 1.0
-        elif self.time_grant < 0.0:
-            self.time_grant = 0.0
-
-        # must make a minimum effort to apply; time_grant can only be 0 if
-	# applying is False.
-        if self.applying and self.time_grant < 0.1:
-            self.time_grant = 0.1
-
-
-    def check_reentry(self, params, rng):
-
-        "Possibly reintroduce a previously dropped-out agent."
-
-        if rng.random() < params['prob_reentry']:
-            self.set_random_time_grant(params['reentry_range'], rng)
-            self.applying = True
-            self.memory = []
-
-
-
-##############################################################################
-
     ### SELF LEARNING RULES ###
-
-    def update_strategy_self_thermostat(self, params, rng):
-
-        """
-        Update agent strategy based on self learning.
-
-        1. agents who do not hold a grant increase their time allocation
-        2. agents who hold a grant decrease their time allocation
-
-        WCSS paper - THERMOSTAT model
-        """
-
-        step = _get_update_step(params, rng)
-
-        if not self.grant_held:
-            #self.time_grant *= (1.0 + step)
-            self.time_grant += step
-        else:
-            #self.time_grant *= (1.0 - step)
-            self.time_grant -= step
-
-        if not self.applying:
-            self.check_reentry(params, rng)
-
-        self.check_time_bounds()
-
 
     def update_strategy_self_memory(self, params, rng):
 
@@ -283,6 +268,32 @@ class Academic(object):
             self.check_reentry(params, rng)
 
         self.check_time_bounds()
+
+    def update_strategy_self_thermostat(self, params, rng):
+
+        """
+        Update agent strategy based on self learning.
+
+        1. agents who do not hold a grant increase their time allocation
+        2. agents who hold a grant decrease their time allocation
+
+        WCSS paper - THERMOSTAT model
+        """
+
+        step = _get_update_step(params, rng)
+
+        if not self.grant_held:
+            #self.time_grant *= (1.0 + step)
+            self.time_grant += step
+        else:
+            #self.time_grant *= (1.0 - step)
+            self.time_grant -= step
+
+        if not self.applying:
+            self.check_reentry(params, rng)
+
+        self.check_time_bounds()
+
 
     # pylint: enable=too-many-instance-attributes
 
